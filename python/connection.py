@@ -120,3 +120,90 @@ class SimpleSocketConnection(ConnectionInterface):
     @staticmethod
     def _length(string):
         return len(string.encode())
+
+
+class SimpleConnectionSlaveThread(threading.Thread):
+
+    def __init__(self, connection):
+        threading.Thread.__init__(self)
+
+        self.connection = connection  # type: SimpleSocketConnection
+
+        self.input_queue = queue.Queue()
+        self.output_queue = queue.Queue()
+
+        self.running = False
+
+    def run(self):
+
+        self.running = True
+
+        while self.running:
+            obj = self.connection.receive()
+
+            # Putting the object, that was received into the input queue
+            self.input_queue.put(obj)
+
+            # Waiting/blocking until the output queue is empty
+            self._wait_output()
+
+            # Sending back the object, that was finally put into the output queue
+            response_object = self.output_queue.get()
+            self.connection.send(response_object)
+
+    def get_command(self, blocking=True):
+        return self.input_queue.get(block=blocking, timeout=None)
+
+    def put_response(self, obj):
+        self.output_queue.put(obj)
+
+    def _wait_output(self):
+
+        while self.output_queue.empty():
+            time.sleep(0.001)
+
+
+class SimpleConnectionMasterThread(threading.Thread):
+
+    def __init__(self, connection):
+        threading.Thread.__init__(self)
+
+        self.connection = connection  # type: SimpleSocketConnection
+
+        self.input_queue = queue.Queue()
+        self.output_queue = queue.Queue()
+
+        self.running = False
+
+    def run(self):
+
+        self.running = True
+
+        while self.running:
+
+            # Waiting for the master to issue a command to be sent to the slave
+            self._wait_output()
+
+            # Getting the input that has finally been put into the output queue
+            command = self.output_queue.get()
+            self.connection.send(command)
+
+            # Putting the response from the slave into the input queue
+            response = self.connection.receive()
+            self.input_queue.put(response)
+
+    def put_command(self, command):
+        self.output_queue.put(command)
+
+    def get_response(self, blocking=True):
+        return self.input_queue.get(block=blocking, timeout=None)
+
+    def _wait_input(self):
+        while self.input_queue.empty():
+            time.sleep(0.001)
+
+    def _wait_output(self):
+        while self.output_queue.empty():
+            time.sleep(0.001)
+
+
