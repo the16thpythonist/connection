@@ -1,8 +1,23 @@
 import socket
 import json
 
-class ConnectionInterface:
 
+class ConnectionInterface:
+    """
+    This is an Interface for connection objects. Connection objects are supposed to be the very basic building block
+    for communication mostly (but not only) between different processes, and/or different programming languages.
+    The connection interface enforces the behaviour to send and receive strings and objects alike, using the JSON
+    format as a way of serializing objects (since web servers are among the aspired use cases).
+
+    USAGE:
+    For the actual usage of a connection only the following methods will be needed:
+    - 'send' sends an object trough the connection, which is serialized in the JSON string format
+    - 'receive' waits (blocking) for an incoming transmission and returns the object sent.
+    --> Aside from these basic characteristics the underlying implementation of a connection might differ. It could
+    for example be built on mail transfer, sockets, IOStreams... Thus the required process of creating this required
+    foundation for a connection varries with the concrete implementation, but the means of how data is sent and
+    received will be mostly dictated by this Interface
+    """
     def __init__(self):
         pass
 
@@ -80,9 +95,6 @@ class SimpleSocketConnection(ConnectionInterface):
 
         return type_byte, length
 
-    def _length(self, string):
-        return len(string.encode())
-
     def _initiate(self, send_type, length):
         # Assembling the header bytes from the type byte and the length bytes
         length_bytes = str(length).zfill(self.HEADER_LENGTH - 1)
@@ -102,3 +114,7 @@ class SimpleSocketConnection(ConnectionInterface):
             data_string = data.decode()
             data_object = json.loads(data_string)
             return data_object
+
+    @staticmethod
+    def _length(self, string):
+        return len(string.encode())
