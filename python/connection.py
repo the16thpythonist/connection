@@ -116,5 +116,5 @@ class SimpleSocketConnection(ConnectionInterface):
             return data_object
 
     @staticmethod
-    def _length(self, string):
+    def _length(string):
         return len(string.encode())
