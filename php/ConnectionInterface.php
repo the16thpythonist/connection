@@ -8,5 +8,17 @@
 
 interface ConnectionInterface
 {
+    public function receiveLength(int $length);
 
+    public function receive();
+
+    public function sendallBytes();
+
+    public function sendallString(string $string);
+
+    public function sendString(string $string);
+
+    public function sendJSON(object $obj);
+
+    public function send(object $obj);
 }
