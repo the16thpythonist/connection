@@ -2,6 +2,7 @@ import threading
 import socket
 import queue
 import json
+import time
 
 
 class ConnectionInterface:
@@ -90,7 +91,7 @@ class SimpleSocketConnection(ConnectionInterface):
 
     def _wait(self):
         header_bytes = self.receive_length(self.HEADER_LENGTH)
-        type_byte = header_bytes[0]
+        type_byte = header_bytes[0].to_bytes(1, 'big')
         length_bytes = header_bytes[1:]
 
         length = int(length_bytes.decode())
@@ -99,8 +100,8 @@ class SimpleSocketConnection(ConnectionInterface):
 
     def _initiate(self, send_type, length):
         # Assembling the header bytes from the type byte and the length bytes
-        length_bytes = str(length).zfill(self.HEADER_LENGTH - 1)
-        header_bytes = send_type + length_bytes
+        length_string = str(length).zfill(self.HEADER_LENGTH - 1)
+        header_bytes = send_type + length_string.encode()
 
         self.sendall_bytes(header_bytes)
 
